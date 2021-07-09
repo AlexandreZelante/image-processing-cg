@@ -15,12 +15,12 @@ def applyAdaptiveThreshold():
     adaptiveThresholdImage = []
     img = cv2.imread('./input/rg.jpg',0)
     imageArray = numpy.asarray(img)
-    img = cv.medianBlur(imageArray,5)
+    img = cv2.medianBlur(imageArray,5)
     
     # grayImage = convertToGrayScale(imageArray)
 
     th3 = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,2)
-
+    cv2.imwrite("adaptiveThresholdImage_dwdwdwdwdw", th3)
     return th3
 
 applyAdaptiveThreshold()

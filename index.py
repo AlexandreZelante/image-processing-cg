@@ -102,6 +102,7 @@ def pipeline():
       cv2.imwrite(OUTPUT_DIR + "adaptiveThresholdImage_" + filename, numpy.array(adaptiveThresholdImage).reshape(imageHeight,imageWidth))
       print("Imagem com o Threshold aplicado gerado")
       
+      # Step 3: Deskew image (Alinhar)
 
       # Save image
       cv2.imwrite(OUTPUT_DIR + "final_" + filename, numpy.array(grayImage).reshape(imageHeight,imageWidth))
