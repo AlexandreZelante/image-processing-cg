@@ -1,8 +1,12 @@
 import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
+import xlsxwriter
+# image = cv.imread('./input/RGCortado.jpg')
+image = cv.imread('./input/RGCortado.jpg')
+workbook = xlsxwriter.Workbook('hello.xlsx')
+worksheet = workbook.add_worksheet()
 
-image = cv.imread('./input/rg2.jpg')
 
 # Normal threshold
 # ret,thresh1 = cv.threshold(img,127,255,cv.THRESH_BINARY)
@@ -36,88 +40,105 @@ image = cv.imread('./input/rg2.jpg')
 #     plt.xticks([]),plt.yticks([])
 # plt.show()
 
-# def adaptiveThreshold(sub_thresh = 0.15):
-#     gray_image = cv.cvtColor(image, cv.COLOR_RGB2GRAY)
-# #    Calculating integral image
-#     # integralimage = np.zeros_like(gray_image, dtype=np.uint32)
-#     integralimage = cv.integral(gray_image, cv.CV_32F)
+def getIntegralAt(integral, width, x1, y1, x2, y2): 
+    result = integral[x2 + y2 * width]
+    if (y1 > 0):
+        result -= integral[x2 + (y1 - 1) * width]
+        if (x1 > 0):
+            result += integral[(x1 - 1) + (y1 - 1) * width]
+        
     
-#     width = gray_image.shape[1]
-#     height = gray_image.shape[0]
-#     win_length = int(width / 10)
-#     image_thresh = np.zeros((height, width, 1), dtype = np.uint8)
-# #    perform threshholding
-#     for j in range(height):
-#         for i in range(width):
-#             x1 = i - win_length
-#             x2 = i + win_length
-#             y1 = j - win_length
-#             y2 = j + win_length
+    if (x1 > 0):
+        result -= integral[(x1 - 1) + (y2) * width];
+    
+    return result;
+
+def adaptiveThreshold(sub_thresh = 0.15):
+    gray_image = cv.cvtColor(image, cv.COLOR_RGB2GRAY)
+#    Calculating integral image
+    # integralimage = np.zeros_like(gray_image, dtype=np.uint32)
+    integralimage = cv.integral(gray_image, cv.CV_32F)
+    
+    width = gray_image.shape[1]
+    print("width "+str(width))
+    height = gray_image.shape[0]
+    print("height "+str(height))
+    win_length = int(width / 10)
+    image_thresh = np.zeros((height, width, 1), dtype = np.uint8)
+#    perform threshholding
+    for j in range(height):
+        for i in range(width):
+            x1 = i - win_length
+            x2 = i + win_length
+            y1 = j - win_length
+            y2 = j + win_length
+
+            #check the border
+            if (x1 < 0):
+                x1 = 0
+            if (y1 < 0):
+                y1 = 0
+            if (x2 > width):
+                x2 = width - 1
+            if (y2 > height):
+                y2 = height - 1
+            count = (x2 - x1) * (y2 - y1)
+
+            sum = integralimage[y2, x2] - integralimage[y1, x2] - integralimage[y2, x1] + integralimage[y1, x1]
+            worksheet.write(j, i, sum)
             
-# #            check the border
-#             if(x1 < 0):
-#                 x1 = 0
-#             if(y1 < 0):
-#                 y1 = 0
-#             if(x2 > width):
-#                 x2 = width -1
-#             if(y2 > height):
-#                 y2 = height -1
-#             count = (x2- x1) * (y2 - y1)
+            if (int)(gray_image[j, i] * count) < (int) (sum * (1.0 - sub_thresh)):
+                image_thresh[j, i] = 0
+            else:
+                image_thresh[j, i] = 255
 
-#             # sum = integralimage[y2, x2] - integralimage[x2, y1 - 1] -integralimage[x1 - 1, y2] - integralimage[x1 - 1, y1 - 1]
-#             sum = integralimage[y2, x2] - integralimage[y1, x2] -integralimage[y2, x1] -integralimage[y1, x1]
-#             if (int)(gray_image[j, i] * count) < (int) (sum * (1.0 - sub_thresh)):
-#                 image_thresh[j, i] = 0
-#             else:
-#                 image_thresh[j, i] = 255
+    return image_thresh
 
-#     return image_thresh
+# def thresholdIntegral(T = 0.15):
+# #   outputMat=np.uint8(np.ones(inputMat.shape)*255)
+#   s = cv.integral(image)
 
-def thresholdIntegral(T = 0.15):
-#   outputMat=np.uint8(np.ones(inputMat.shape)*255)
-  s = cv.integral(image)
+#   outputMat=np.zeros(image.shape)
+#   nRows = image.shape[0]
+#   nCols = image.shape[1]
+#   S = int(max(nRows, nCols) / 8)
 
-  outputMat=np.zeros(image.shape)
-  nRows = image.shape[0]
-  nCols = image.shape[1]
-  S = int(max(nRows, nCols) / 8)
+#   s2 = int(S / 4)
 
-  s2 = int(S / 4)
+#   for i in range(nRows):
+#       y1 = i - s2
+#       y2 = i + s2
 
-  for i in range(nRows):
-      y1 = i - s2
-      y2 = i + s2
+#       if (y1 < 0) :
+#           y1 = 0
+#       if (y2 >= nRows):
+#           y2 = nRows - 1
 
-      if (y1 < 0) :
-          y1 = 0
-      if (y2 >= nRows):
-          y2 = nRows - 1
+#       for j in range(nCols):
+#           x1 = j - s2
+#           x2 = j + s2
 
-      for j in range(nCols):
-          x1 = j - s2
-          x2 = j + s2
+#           if (x1 < 0) :
+#               x1 = 0
+#           if (x2 >= nCols):
+#               x2 = nCols - 1
+#           count = (x2 - x1)*(y2 - y1)
 
-          if (x1 < 0) :
-              x1 = 0
-          if (x2 >= nCols):
-              x2 = nCols - 1
-          count = (x2 - x1)*(y2 - y1)
+#           sum=s[y2][x2]-s[y2][x1]-s[y1][x2]+s[y1][x1]
 
-          sum=s[y2][x2]-s[y2][x1]-s[y1][x2]+s[y1][x1]
+#           if ((int)(image[i][j] * count) < (int)(sum * (1.0 - T))):
+#               outputMat[i][j] = 255
+#           else:
+#               outputMat[j][i] = 0
 
-          if ((int)(image[i][j] * count) < (int)(sum * (1.0 - T))):
-              outputMat[i][j] = 255
-          else:
-              outputMat[j][i] = 0
+#   return outputMat
 
-  return outputMat
-
-imageNice = thresholdIntegral()
+imageNice = adaptiveThreshold()
 cv.imwrite("final_fodase.jpg", np.array(imageNice))
 plt.subplot(2,2,1),plt.imshow(imageNice,'gray')
 plt.xticks([]),plt.yticks([])
 plt.show()
+workbook.close()
 
 # void thresholdIntegral(cv::Mat &inputMat, cv::Mat &outputMat)
 # {

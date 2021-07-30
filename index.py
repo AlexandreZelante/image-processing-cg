@@ -34,46 +34,43 @@ def applyAdaptiveThreshold(imageArray):
 
   return th3
 
-def applyAdaptiveThresholdTest():
+def applyAdaptiveThresholdTest(input_img, sub_thresh = 0.15):
   # input_img = cv2.imread('./input/rg.jpg')
+  integralimage = cv2.integral(input_img, cv2.CV_32F)
+  
+  width = input_img.shape[1]
+  print("width "+str(width))
+  height = input_img.shape[0]
+  print("height "+str(height))
+  win_length = int(width / 10)
+  image_thresh = numpy.zeros((height, width, 1), dtype = numpy.uint8)
+#    perform threshholding
+  for j in range(height):
+      for i in range(width):
+          x1 = i - win_length
+          x2 = i + win_length
+          y1 = j - win_length
+          y2 = j + win_length
 
-  # h = input_img.shape[0]
-  # w = input_img.shape[1]
+          #check the border
+          if (x1 < 0):
+              x1 = 0
+          if (y1 < 0):
+              y1 = 0
+          if (x2 > width):
+              x2 = width - 1
+          if (y2 > height):
+              y2 = height - 1
+          count = (x2 - x1) * (y2 - y1)
 
-  # S = w/8
-  # s2 = S/2
-  # T = 15.0
+          sum = integralimage[y2, x2] - integralimage[y1, x2] - integralimage[y2, x1] + integralimage[y1, x1]
+          
+          if (int)(input_img[j][i] * count) < (int) (sum * (1.0 - sub_thresh)):
+              image_thresh[j, i] = 0
+          else:
+              image_thresh[j, i] = 255
 
-  # # print(h)
-
-  # #integral img
-  # int_img = numpy.zeros_like(input_img, dtype=numpy.uint32)
-  # print(int_img)
-  # for col in range(w):
-  #   for row in range(h):
-  #     # print('row')
-  #     int_img[row,col] = input_img[0:row,0:col].sum()
-  #output img
-  # out_img = numpy.zeros_like(input_img)    
-
-  # for col in range(w):
-  #     for row in range(h):
-  #         #SxS region
-  #         y0 = max(row-s2, 0)
-  #         y1 = min(row+s2, h-1)
-  #         x0 = max(col-s2, 0)
-  #         x1 = min(col+s2, w-1)
-
-  #         count = (y1-y0)*(x1-x0)
-
-  #         sum_ = int_img[y1, x1]-int_img[y0, x1]-int_img[y1, x0]+int_img[y0, x0]
-
-  #         if input_img[row, col]*count < sum_*(100.-T)/100.:
-  #             out_img[row,col] = 0
-  #         else:
-  #             out_img[row,col] = 255
-
-  # return out_img
+  return image_thresh
 
 
 def pipeline():
@@ -98,7 +95,7 @@ def pipeline():
       print("Imagem em escala de cinza gerada")
 
       # Step 2: Adaptive Threshold
-      adaptiveThresholdImage = applyAdaptiveThresholdTest(imageArray)
+      adaptiveThresholdImage = applyAdaptiveThresholdTest(grayImage)
       cv2.imwrite(OUTPUT_DIR + "adaptiveThresholdImage_" + filename, numpy.array(adaptiveThresholdImage).reshape(imageHeight,imageWidth))
       print("Imagem com o Threshold aplicado gerado")
       
