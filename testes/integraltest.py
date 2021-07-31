@@ -35,57 +35,10 @@ def applyAdaptiveThreshold(imageArray):
 
   return th3
 
-def getIntegralImage(input_img):
-  integralImage = []
-  for i in range(imageHeight):
-    sum = 0
-    row = []
-    for j in range(imageWidth):
-      sum = sum + input_img[i][j]
-      if (i == 0):
-         row.append(sum)
-        # integralImage[i][j]. = sum
-      else:
-        row.append(integralImage[i-1][j]+sum)
-    integralImage.append(row)  
-  return integralImage
-
-# for i=0 to w do
-#    sum←0
-
-#    for j=0 to h do
-#       sum ← sum + in[i, j]
-
-#       if i = 0 then
-#          intImg[i, j] ← sum
-#       else
-#          intImg[i, j] ← intImg[i − 1, j] + sum
-#       end if
-#    end for 
-# end for
-# w = ncol(im)
-# h = nrow(im)
-# intImg = c(NA)
-# length(intImg) = w*h
-
-# for(i in 1:w){ #x
-#   sum = 0;
-#   for(j in 1:h){ #y
-#     ind = ((j-1)*w)+ (i-1) + 1 #index
-#     sum = sum + im[ind]
-#     if(i == 1){
-#       intImg[ind] = sum
-#     }else{
-#       intImg[ind] = intImg[ind-1]+sum
-#     }
-#   }
-# }
-# intImg = matrix(intImg, h, w, byrow=T)
 
 def applyAdaptiveThresholdTest(input_img, sub_thresh = 0.15):
   # input_img = cv2.imread('./input/rg.jpg')
-  # integralimage = cv2.integral(input_img, cv2.CV_32F)
-  integralimage = getIntegralImage(input_img)
+  integralimage = cv2.integral(input_img, cv2.CV_32F)
 #  https://stackoverflow.com/questions/16546130/efficient-implementation-of-summed-area-table-integral-image-in-r
   width = input_img.shape[1]
   print("width "+str(width))
@@ -112,7 +65,7 @@ def applyAdaptiveThresholdTest(input_img, sub_thresh = 0.15):
               y2 = height - 1
           count = (x2 - x1) * (y2 - y1)
 
-          sum = intregalimage[y2, x2] - integralimage[y1, x2] - integralimage[y2, x1] + integralimage[y1, x1]
+          sum = integralimage[y2, x2] - integralimage[y1, x2] - integralimage[y2, x1] + integralimage[y1, x1]
           
           if (int)(input_img[j][i] * count) < (int) (sum * (1.0 - sub_thresh)):
               image_thresh[j, i] = 0
@@ -120,6 +73,34 @@ def applyAdaptiveThresholdTest(input_img, sub_thresh = 0.15):
               image_thresh[j, i] = 255
 
   return image_thresh
+
+
+def integralImage(grayImage):
+  # create the array of integral image
+  array_integral = numpy.zeros_like(grayImage)
+
+  # compute values for integral image
+  for r in range(imageHeight):
+      for c in range(imageWidth):
+          # compute the integral image (fast way)
+          B = 0
+          C = 0
+          D = 0
+          if r > 0:
+              B = array_integral[r - 1, c]
+          if c > 0:
+              C = array_integral[r, c - 1]
+          if r > 0 and c > 0:
+              D = array_integral[r - 1, c - 1]
+
+          array_integral[r, c] = grayImage[r, c] + B + C - D
+          
+  return array_integral
+          # compute the integral image (slow way)
+          # for i in range(r):
+          #     for j in range(c):
+          #         array_integral[r, c] = array_integral[r, c] + array_intensity[i, j]
+
 
 def pipeline():
   for filename in os.listdir(INPUT_DIR):
@@ -143,11 +124,10 @@ def pipeline():
       
       # # Step 1: Convert to Gray Scale
       grayImage = convertToGrayScale(image)
-      print(grayImage)
-      integralimage = getIntegralImage(grayImage)
-      cv2.imwrite(OUTPUT_DIR + "grayImage_" + filename, numpy.array(integralimage))
+      integral = integralImage(gray)
+      cv2.imwrite(OUTPUT_DIR + "grayImage_" + filename, integral)
 
-      # Step 2: Adaptive Threshold
+      # # Step 2: Adaptive Threshold
       # adaptiveThresholdImage = applyAdaptiveThresholdTest(numpy.array(grayImage))
       # cv2.imwrite(OUTPUT_DIR + "adaptiveThresholdImage_" + filename, numpy.array(adaptiveThresholdImage))
       # print("Imagem com o Threshold aplicado gerado")
