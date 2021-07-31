@@ -4,6 +4,8 @@ import cv2
 import pytesseract
 import math
 import json
+import re
+import copy
 
 # Estrutura do array
 # [
@@ -23,11 +25,11 @@ imageWidth = 0
 # Pontos em porcentagem de corte da imagem
 # Com o seguinte padrão: [startHeight, endHeight, startWidth, endWidth]
 CROP_POINTS = {
-  "RG": [0, 16, 0, 42],
-  "dataExpedicao": [0, 16, 42, 100 ],
-  "nome": [16, 30, 0, 100],
-  "filiacao": [30, 47, 0, 100],
-  "naturalidade": [47, 59, 0, 50],
+  "RG": [0, 16, 5, 42],
+  "dataExpedicao": [0, 16, 42, 100],
+  "nome": [16, 30, 5, 100],
+  "filiacao": [30, 47, 5, 100],
+  "naturalidade": [47, 59, 5, 50],
   "dataNasc": [47, 59, 50, 100],
   "CPF": [76, 92, 5, 34]
 }
@@ -113,6 +115,42 @@ def cropImageProportionally(image, startHeight, endHeight, startWidth, endWidth)
 
   return croppedImage
 
+def formatText(text, field = 'RG'):
+  regex = ''
+  text = re.sub(r'\f', '', text)
+
+  if field == "RG":
+    regex = r'\d{1,2}.?\d{3}.?\d{3}-?\d{1}|X|x'
+  elif field == "CPF":
+    # Remove espaços fora e dentro do texto
+    cpf = text.replace(" ", "")
+    regex = r'[0-9]{2}[\.]?[0-9]{3}[\.]?[0-9]{3}[\/]?[0-9]{4}[-]?[0-9]{2}|[0-9]{3}[\.]?[0-9]{3}[\.]?[0-9]{3}[-/]?[0-9]{2}'
+    matchesArray = re.findall(regex, cpf)
+
+    if len(matchesArray) > 0:
+      return matchesArray[0]
+    else: 
+      return None
+  elif field == "dataExpedicao" or field == "dataNasc":
+    regex = r'[0-9]{2}\/[0-9]{2}\/[0-9]{4}'
+  elif field == 'nome':
+    regex = r"^.{0,4}\n"
+
+    noNameAtStart = re.sub(regex, "", text, 1)
+
+    regex = r"[^A-Z ]+"
+
+    return re.sub(regex, "", noNameAtStart)
+  elif field == "naturalidade" or field == "filiacao":
+    return text
+  
+  matchesArray = re.findall(regex, text)
+
+  if len(matchesArray) > 0:
+    return matchesArray[0]
+  else: 
+    return None
+      
 def pipeline():
   for filename in os.listdir(INPUT_DIR):
     if filename.endswith(".jpg") or filename.endswith(".png"):
@@ -162,13 +200,18 @@ def pipeline():
         cv2.imwrite(croppedImagePath, numpy.array(croppedImage))
 
         text = pytesseract.image_to_string(cv2.imread(croppedImagePath))
+        formattedText = formatText(text, key)
 
-        outputJSON[key] = text
+        if(formattedText != None):
+          outputJSON[key] = formattedText
+        else:
+          outputJSON[key] = text
 
       # Salvamos um arquivo .json com todos os dados do RG requisitados
       with open(imageDirectoryPath + "/4-" + filename[:-4] + ".json" , 'w') as fp:
-        json.dump(outputJSON, fp)
+        json.dump(outputJSON, fp, indent=4, sort_keys=True)
 
-      print(outputJSON)
+      print('Saída documento JSON:')
+      print(json.dumps(outputJSON, indent=4, sort_keys=True))
 
 pipeline()
