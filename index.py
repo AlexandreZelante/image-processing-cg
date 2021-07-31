@@ -6,7 +6,7 @@ import math
 import json
 import re
 import copy
-# Apenas para mostrar as imagens no colab
+# Esta biblioteca é útil apenas para exibir as imagens no Google Colaboratory, não funcionará no terminal local do seu computador
 from IPython.display import Image, display
 
 # Estrutura do array
