@@ -6,6 +6,8 @@ import math
 import json
 import re
 import copy
+# Apenas para mostrar as imagens no colab
+from IPython.display import Image, display
 
 # Estrutura do array
 # [
@@ -176,16 +178,22 @@ def pipeline():
       # Passo 1: Converte para escala de cinza
       grayImage = convertToGrayScale(image)
       cv2.imwrite(imageDirectoryPath + "/1-grayImage" + fileExtension, numpy.array(grayImage))
-      print("Imagem Cinza gerada")
+      print("\n*********************************************************************************")
+      print("****************************Imagem Cinza gerada**********************************")
+      print("*********************************************************************************\n")
+      display(Image(imageDirectoryPath + "/1-grayImage" + fileExtension))
       
       # Passo 2: Geramos uma imagem integral
       integralimage = getIntegralImage(grayImage)
-      print("Imagem Integral gerada")
+      print("Imagem Integral gerada -- Não será exibida pois só é utilizada para criterios de performance")
 
       # Passo 3: Aplicamos o Threshold Adaptativo
       adaptiveThresholdImage = applyAdaptiveThresholdTest(grayImage, integralimage)
       cv2.imwrite(imageDirectoryPath + "/2-adaptiveThresholdImage" + fileExtension, numpy.array(adaptiveThresholdImage))
-      print("Imagem com o Threshold aplicado gerada")
+      print("\n*********************************************************************************")
+      print("**********************Imagem com o Threshold aplicado gerada*********************")
+      print("*********************************************************************************\n")
+      display(Image(imageDirectoryPath + "/2-adaptiveThresholdImage" + fileExtension))
 
       outputJSON = {}
 
@@ -198,6 +206,10 @@ def pipeline():
         croppedImage = cropImageProportionally(adaptiveThresholdImage, value[0], value[1], value[2], value[3])
 
         cv2.imwrite(croppedImagePath, numpy.array(croppedImage))
+        print("\n*********************************************************************************")
+        print("***************************Imagem recortada: " + key+ "***************************")
+        print("*********************************************************************************\n")
+        display(Image(croppedImagePath))
 
         text = pytesseract.image_to_string(cv2.imread(croppedImagePath))
         formattedText = formatText(text, key)
@@ -210,8 +222,10 @@ def pipeline():
       # Salvamos um arquivo .json com todos os dados do RG requisitados
       with open(imageDirectoryPath + "/4-" + filename[:-4] + ".json" , 'w') as fp:
         json.dump(outputJSON, fp, indent=4, sort_keys=True)
-
-      print('Saída documento JSON:')
+      
+      print("\n*********************************************************************************")
+      print("********************************JSON Final Gerado********************************")
+      print("*********************************************************************************\n")
       print(json.dumps(outputJSON, indent=4, sort_keys=True))
 
 pipeline()
