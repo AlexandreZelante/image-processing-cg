@@ -1,7 +1,9 @@
 input/*
 output/*
 outras/*
+notUsed/*
 
 !input/.gitkeep 
 !output/.gitkeep 
 !outras/.gitkeep
+!notUsed/.gitkeep

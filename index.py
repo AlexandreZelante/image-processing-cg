@@ -1,7 +1,9 @@
 import os
-from PIL import Image, ImageOps
 import numpy
 import cv2
+import pytesseract
+from PIL import Image
+import math
 
 # Array Structure
 # [
@@ -17,6 +19,18 @@ OUTPUT_DIR = "./output/"
 
 imageHeight = 0
 imageWidth = 0
+
+# Pontos em porcentagem de corte da imagem
+# Com o seguinte padrão: [startHeight, endHeight, startWidth, endWidth]
+CROP_POINTS = {
+  "RG": [0, 16, 0, 42],
+  "dataExpedicao": [0, 16, 42, 100 ],
+  "nome": [16, 30, 0, 100],
+  "filiacao": [30, 47, 0, 100],
+  "naturalidade": [47, 59, 0, 50],
+  "dataNasc": [47, 59, 50, 100],
+  "CPF": [76, 92, 5, 34]
+}
 
 # Converte a imagem para escala de cinza
 def convertToGrayScale(imageArray):
@@ -77,9 +91,35 @@ def applyAdaptiveThresholdTest(input_img, integralimage, sub_thresh = 0.15):
 
   return threshImage
 
+def cropImageProportionally(image, startHeight, endHeight, startWidth, endWidth):
+  pixelStartHeight = math.floor(imageHeight * (startHeight/100))
+  pixelEndHeight = math.floor(imageHeight * (endHeight/100))
+
+  pixelStartWidth = math.floor(imageWidth * (startWidth/100))
+  pixelEndWidth = math.floor(imageWidth * (endWidth/100))
+  print(pixelStartHeight, pixelEndHeight, pixelStartWidth, pixelEndWidth)
+
+  croppedImage = []
+
+  for i in range(pixelStartHeight, pixelEndHeight):
+    row = []
+    for j in range(pixelStartWidth, pixelEndWidth):
+      row.append(image[i][j])
+    croppedImage.append(row)
+
+  return croppedImage
+
 def pipeline():
   for filename in os.listdir(INPUT_DIR):
     if filename.endswith(".jpg") or filename.endswith(".png"):
+
+      imageDirectoryPath = OUTPUT_DIR + '/' + filename[:-4]
+      fileExtension = filename[-4:]
+
+      # Cria o diretório para aquela foto
+      if not os.path.exists(imageDirectoryPath):
+        os.makedirs(imageDirectoryPath)
+
       print(filename)
       image = cv2.imread(INPUT_DIR + filename) 
 
@@ -91,38 +131,56 @@ def pipeline():
       global imageWidth
       imageWidth = len(image[0])
 
-      print("Numero de colunas: "+ str(len(imageHeight)))
-      print("Numero de linhas: "+ str(len(imageWidth)))
+      print("Numero de colunas: "+ str(imageWidth))
+      print("Numero de linhas: "+ str(imageHeight))
       
       # Step 1: Convert to Gray Scale
       grayImage = convertToGrayScale(image)
-      cv2.imwrite(OUTPUT_DIR + "grayImage_" + filename, numpy.array(grayImage))
+      cv2.imwrite(imageDirectoryPath + "/grayImage" + fileExtension, numpy.array(grayImage))
       print("Imagem Cinza gerada")
       
       # Artigo usado como base: http://people.scs.carleton.ca/~roth/iit-publications-iti/docs/gerh-50002.pdf
       # Step 2: Get Integral Image
       integralimage = getIntegralImage(grayImage)
-      cv2.imwrite(OUTPUT_DIR + "integralImage_" + filename, numpy.array(integralimage))
       print("Imagem Integral gerada")
 
       # Step 3: Adaptive Threshold
       adaptiveThresholdImage = applyAdaptiveThresholdTest(grayImage, integralimage)
-      cv2.imwrite(OUTPUT_DIR + "adaptiveThresholdImage_" + filename, numpy.array(adaptiveThresholdImage))
+      cv2.imwrite(imageDirectoryPath + "/adaptiveThresholdImage" + fileExtension, numpy.array(adaptiveThresholdImage))
       print("Imagem com o Threshold aplicado gerada")
+
+      outputJSON = {}
+
+      for key, value in CROP_POINTS.items():
+        croppedImagePath = imageDirectoryPath + "/" + key  + fileExtension
+
+        croppedImage = cropImageProportionally(adaptiveThresholdImage, value[0], value[1], value[2], value[3])
+        cv2.imwrite(croppedImagePath, numpy.array(croppedImage))
+
+        text = pytesseract.image_to_string(cv2.imread(croppedImagePath))
+
+        outputJSON[key] = text
+
+      print(outputJSON)
+
+     
+
+      # croppedImage = cropImageProportionally(adaptiveThresholdImage, CROP_POINTS["dataExp"][0], CROP_POINTS["dataExp"][1], CROP_POINTS["dataExp"][2], CROP_POINTS["dataExp"][3])
+      # cv2.imwrite(imageDirectoryPath + "/croppedImage/_dataExp" + fileExtension, numpy.array(croppedImage))
+
       
       # Step 3: Deskew image (Alinhar)
+
+      # Step 4: Crop image proportionally
+
+      # Step 5: OCR
+      # text = pytesseract.image_to_string(cv2.imread(OUTPUT_DIR + "adaptiveThresholdImage_" + filename))
+      # print(text)
 
       # Save image
       # cv2.imwrite(OUTPUT_DIR + "final_" + filename, numpy.array(grayImage).reshape(imageHeight,imageWidth))
 
 
+
+
 pipeline()
-
-
-
-# def applyAdaptiveThreshold(imageArray):
-#   adaptiveThresholdImage = []
-
-#   th3 = cv2.adaptiveThreshold(imageArray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,2)
-
-#   return th3
