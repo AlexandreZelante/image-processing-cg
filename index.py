@@ -44,6 +44,7 @@ def convertToGrayScale(imageArray):
   return grayImage
 
 # Calcula a integral da imagem permitindo fazer a binarização em tempo linear
+# Utilizado como base o artigo: http://people.scs.carleton.ca/~roth/iit-publications-iti/docs/gerh-50002.pdf
 def getIntegralImage(input_img):
   integralImage = []
   for i in range(imageHeight):
@@ -59,6 +60,7 @@ def getIntegralImage(input_img):
   return integralImage
 
 # Aplica binzarização com threshold adaptativo
+# Utilizado como base o artigo: http://people.scs.carleton.ca/~roth/iit-publications-iti/docs/gerh-50002.pdf
 def applyAdaptiveThresholdTest(input_img, integralimage, sub_thresh = 0.15):
   win_length = int(imageWidth / 10)
   threshImage = []
@@ -138,7 +140,6 @@ def pipeline():
       cv2.imwrite(imageDirectoryPath + "/1-grayImage" + fileExtension, numpy.array(grayImage))
       print("Imagem Cinza gerada")
       
-      # Artigo usado como base: http://people.scs.carleton.ca/~roth/iit-publications-iti/docs/gerh-50002.pdf
       # Passo 2: Geramos uma imagem integral
       integralimage = getIntegralImage(grayImage)
       print("Imagem Integral gerada")
