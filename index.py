@@ -66,7 +66,7 @@ def getIntegralImage(input_img):
 
 # Aplica binzarização com threshold adaptativo
 # Utilizado como base o artigo: http://people.scs.carleton.ca/~roth/iit-publications-iti/docs/gerh-50002.pdf
-def applyAdaptiveThresholdTest(input_img, integralimage, sub_thresh = 0.16):
+def applyAdaptiveThreshold(input_img, integralimage, sub_thresh = 0.15):
   win_length = int(imageWidth / 10)
   threshImage = []
   for i in range(imageHeight):
