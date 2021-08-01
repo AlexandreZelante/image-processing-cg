@@ -5,7 +5,6 @@ import pytesseract
 import math
 import json
 import re
-import copy
 # Esta biblioteca é útil apenas para exibir as imagens no Google Colaboratory, não funcionará no terminal local do seu computador
 from IPython.display import Image, display
 
