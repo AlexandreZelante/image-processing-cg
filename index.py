@@ -28,13 +28,13 @@ imageWidth = 0
 # Pontos em porcentagem de corte da imagem
 # Com o seguinte padrão: [startHeight, endHeight, startWidth, endWidth]
 CROP_POINTS = {
-  "RG": [0, 16, 5, 42],
-  "dataExpedicao": [0, 16, 42, 100],
-  "nome": [16, 30, 5, 100],
-  "filiacao": [30, 47, 5, 100],
-  "naturalidade": [47, 59, 5, 50],
-  "dataNasc": [47, 59, 50, 100],
-  "CPF": [76, 92, 5, 34]
+  "RG": [6, 16, 4, 44],
+  "dataExpedicao": [6, 16, 42, 95],
+  "nome": [16, 30, 5, 95],
+  "filiacao": [30, 47, 4, 95],
+  "naturalidade": [48, 60, 4, 50],
+  "dataNasc": [47, 61, 60, 95],
+  "CPF": [76, 92, 4, 34]
 }
 
 # Converte a imagem para escala de cinza
@@ -66,7 +66,7 @@ def getIntegralImage(input_img):
 
 # Aplica binzarização com threshold adaptativo
 # Utilizado como base o artigo: http://people.scs.carleton.ca/~roth/iit-publications-iti/docs/gerh-50002.pdf
-def applyAdaptiveThresholdTest(input_img, integralimage, sub_thresh = 0.15):
+def applyAdaptiveThresholdTest(input_img, integralimage, sub_thresh = 0.16):
   win_length = int(imageWidth / 10)
   threshImage = []
   for i in range(imageHeight):
@@ -125,7 +125,17 @@ def formatText(text, field = 'RG'):
   text = re.sub(r'\f', '', text)
 
   if field == "RG":
-    regex = r'\d{1,2}.?\d{3}.?\d{3}-?\d{1}|X|x'
+    regex = r'\d{1,2}.\d{3}.?\d{3}.[0-9Xx]'
+
+    matchesArray = re.findall(regex, text)
+
+    if len(matchesArray) > 0:
+      if len(matchesArray[0]) >= 5:
+        return matchesArray[0]
+      else:
+        return None
+    else:
+      return None
   elif field == "CPF":
     # Remove espaços fora e dentro do texto
     cpf = text.replace(" ", "")
@@ -215,6 +225,7 @@ def main():
         display(Image(croppedImagePath))
 
         text = pytesseract.image_to_string(cv2.imread(croppedImagePath))
+        print(text)
         formattedText = formatText(text, key)
 
         if(formattedText != None):
