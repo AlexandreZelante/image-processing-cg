@@ -230,4 +230,6 @@ def pipeline():
       print("*********************************************************************************\n")
       print(json.dumps(outputJSON, indent=4, sort_keys=True))
 
+
+## Inicia a execução do pipeline
 pipeline()
