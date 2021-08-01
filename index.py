@@ -16,7 +16,9 @@ from IPython.display import Image, display
 #     [R,G,B], [R,G,B], [R,G,B]
 #   ]
 # ]
-
+#  pastas para o  colab
+# INPUT_DIR = "./image-processing-cg/input/"
+# OUTPUT_DIR = "./image-processing-cg/output/"
 INPUT_DIR = "./input/"
 OUTPUT_DIR = "./output/"
 
