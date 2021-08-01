@@ -117,6 +117,8 @@ def cropImageProportionally(image, startHeight, endHeight, startWidth, endWidth)
 
   return croppedImage
 
+# Nessa função recebemos texto extraído pelo OCR e aplicamos tratamento de string de acordo com o campo
+# Utilizamos Regex para identificar padrões de RG, CPF e datas e remover sujeiras como caracteres especiais
 def formatText(text, field = 'RG'):
   regex = ''
   text = re.sub(r'\f', '', text)
