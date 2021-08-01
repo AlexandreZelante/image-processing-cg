@@ -154,7 +154,7 @@ def formatText(text, field = 'RG'):
   else: 
     return None
       
-def pipeline():
+def main():
   for filename in os.listdir(INPUT_DIR):
     if filename.endswith(".jpg") or filename.endswith(".png"):
       imageDirectoryPath = OUTPUT_DIR + '/' + filename[:-4]
@@ -230,5 +230,5 @@ def pipeline():
       print(json.dumps(outputJSON, indent=4, sort_keys=True))
 
 
-## Inicia a execução do pipeline
-pipeline()
+## Inicia a execução do pipeline de processamento
+main()
